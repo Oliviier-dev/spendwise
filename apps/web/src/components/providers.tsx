@@ -1,8 +1,6 @@
 "use client";
 
 import { ThemeProvider } from "./theme-provider";
-import { Toaster } from "./ui/sonner";
-
 
 export default function Providers({
   children
@@ -17,7 +15,6 @@ export default function Providers({
       disableTransitionOnChange
     >
       {children}
-      <Toaster richColors />
     </ThemeProvider>
   );
 }

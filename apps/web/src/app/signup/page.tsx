@@ -1,10 +1,10 @@
 "use client";
 
-import {LoginForm } from "@/components/login-form";
+import {SignUpForm} from "@/components/signup-form";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
 
   return (
@@ -37,13 +37,13 @@ export default function LoginPage() {
           <div className="w-full max-w-[350px] space-y-4">
             <div className="flex flex-col space-y-1 text-center">
               <h1 className="text-2xl font-semibold tracking-tight">
-                Welcome back
+                Create an account
               </h1>
               <p className="text-sm text-muted-foreground">
                 Choose a way to continue
               </p>
             </div>
-            <LoginForm onSwitchToSignUp={() => router.push("/signup")} />
+            <SignUpForm onSwitchToSignIn={() => router.push("/login")} />
             <p className="text-center text-xs text-muted-foreground">
               By clicking continue, you agree to our{" "}
               <a
@@ -66,4 +66,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+} 
