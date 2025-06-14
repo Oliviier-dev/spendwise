@@ -8,9 +8,7 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createAuthClient } from "better-auth/client";
-
-const authClient = createAuthClient();
+import { authApi } from "@/lib/api-client";
 
 interface LoginFormProps {
   onSwitchToSignUp: () => void;
@@ -21,7 +19,7 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
 
   const signInWithGoogle = async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/auth/google-auth", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/auth/google-auth`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -47,33 +45,22 @@ export function LoginForm({ onSwitchToSignUp }: LoginFormProps) {
     },
     onSubmit: async ({ value }) => {
       try {
-        const response = await fetch("http://localhost:3000/api/auth/sign-in", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: value.email,
-            password: value.password,
-          }),
-        });
-
-        const result = await response.json();
-
+        const result = await authApi.signIn(value.email, value.password);
+        
         if (result.success) {
           toast.success("Sign in successful!");
           router.push("/dashboard");
         } else {
           toast.error(result.message || "Failed to sign in");
         }
-      } catch (err) {
-        toast.error("An error occurred during sign in");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "An error occurred during sign in");
       }
     },
     validators: {
       onSubmit: z.object({
         email: z.email("Invalid email address"),
-        password: z.string(),
+        password: z.string().min(1, "Password is required"),
       }),
     },
   });

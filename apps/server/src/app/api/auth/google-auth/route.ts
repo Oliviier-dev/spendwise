@@ -6,7 +6,7 @@ export async function POST() {
     const result = await auth.api.signInSocial({
       body: {
         provider: "google",
-        callbackURL: "http://localhost:3001/dashboard"
+        callbackURL: `${process.env.NEXT_PUBLIC_CLIENT_URL}/dashboard`
       }
     });
 
