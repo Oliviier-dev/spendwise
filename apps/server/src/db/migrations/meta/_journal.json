@@ -29,6 +29,13 @@
       "when": 1749965470388,
       "tag": "0003_lyrical_champions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1749966357659,
+      "tag": "0004_bright_ben_grimm",
+      "breakpoints": true
     }
   ]
 }
