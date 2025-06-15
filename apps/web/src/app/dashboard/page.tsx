@@ -3,6 +3,26 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { StatCard } from "@/components/stat-card"
+import { ExpensePieChart } from "@/components/charts/expense-pie-chart";
+import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
+import { BudgetProgress } from "@/components/charts/budget-progress";
+
+// Mock data
+const mockExpenseData = [
+  { name: "Food", value: 400 },
+  { name: "Transport", value: 300 },
+  { name: "Entertainment", value: 200 },
+  { name: "Shopping", value: 100 },
+  { name: "Bills", value: 150 },
+];
+
+const mockTimeSeriesData = [
+  { date: "2024-01-01", income: 4000, expense: 2400 },
+  { date: "2024-01-15", income: 3000, expense: 1398 },
+  { date: "2024-02-01", income: 2000, expense: 9800 },
+  { date: "2024-02-15", income: 2780, expense: 3908 },
+  { date: "2024-03-01", income: 1890, expense: 4800 },
+];
 
 export default function Dashboard() {
   // const router = useRouter();
@@ -43,6 +63,29 @@ export default function Dashboard() {
           title="Expenses"
           amount="$2,800.00"
           growth={-2.3}
+        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <IncomeExpenseChart data={mockTimeSeriesData} />
+        <ExpensePieChart data={mockExpenseData} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <BudgetProgress
+          category="Food"
+          spent={400}
+          total={500}
+        />
+        <BudgetProgress
+          category="Transport"
+          spent={300}
+          total={300}
+        />
+        <BudgetProgress
+          category="Entertainment"
+          spent={200}
+          total={200}
         />
       </div>
     </div>
