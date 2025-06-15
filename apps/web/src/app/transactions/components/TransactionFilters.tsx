@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/select";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
 interface TransactionFiltersProps {
@@ -19,8 +19,10 @@ interface TransactionFiltersProps {
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
   dateRange: DateRange | undefined;
-  onDateRangeChange: (value: DateRange | undefined) => void;
+  onDateRangeChange: (range: DateRange | undefined) => void;
+  onClearDateRange: () => void;
   categories: string[];
+  transactionTypes: string[];
 }
 
 export function TransactionFilters({
@@ -32,7 +34,9 @@ export function TransactionFilters({
   onCategoryChange,
   dateRange,
   onDateRangeChange,
+  onClearDateRange,
   categories,
+  transactionTypes,
 }: TransactionFiltersProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -52,8 +56,11 @@ export function TransactionFilters({
             <SelectValue placeholder="Type" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="income">Income</SelectItem>
-            <SelectItem value="expense">Expense</SelectItem>
+            {transactionTypes.map((type) => (
+              <SelectItem key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         <Select value={selectedCategory} onValueChange={onCategoryChange}>
@@ -68,7 +75,23 @@ export function TransactionFilters({
             ))}
           </SelectContent>
         </Select>
-        <DatePickerWithRange date={dateRange} onDateChange={onDateRangeChange} />
+        <div className="flex items-center gap-2">
+          <DatePickerWithRange date={dateRange} onDateChange={onDateRangeChange} />
+          {dateRange && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClearDateRange();
+              }}
+              className="h-10 w-10"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

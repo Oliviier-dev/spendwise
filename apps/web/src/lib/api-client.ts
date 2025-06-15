@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import type { Transaction } from "@/types/transaction";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -30,6 +31,7 @@ export async function apiRequest<T>(
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}${endpoint}`, {
       ...options,
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
@@ -57,6 +59,21 @@ export const authApi = {
     return apiRequest<{ token: string }>("/api/auth/sign-up", {
       method: "POST",
       body: JSON.stringify({ email, password, name }),
+    });
+  },
+};
+
+export const transactionsApi = {
+  createTransaction: async (transaction: Omit<Transaction, "id">) => {
+    return apiRequest<Transaction>("/api/transactions", {
+      method: "POST",
+      body: JSON.stringify(transaction),
+    });
+  },
+  
+  getTransactions: async () => {
+    return apiRequest<Transaction[]>("/api/transactions", {
+      method: "GET",
     });
   },
 }; 
