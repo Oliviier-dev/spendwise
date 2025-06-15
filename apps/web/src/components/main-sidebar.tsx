@@ -41,7 +41,7 @@ export function MainSidebar() {
 
   return (
     <Sidebar>
-      <div className="flex h-full flex-col gap-2">
+      <div className="flex h-full flex-col gap-2 w-56 bg-white dark:bg-black">
         <div className="px-8 py-6">
           <h1 className="text-2xl font-bold tracking-tight">SpendWise</h1>
         </div>
