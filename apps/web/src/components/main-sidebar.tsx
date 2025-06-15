@@ -31,7 +31,7 @@ const navigation = [
   },
   {
     name: "Saving Goals",
-    href: "/savings",
+    href: "/saving-goals",
     icon: Target,
   },
 ]
