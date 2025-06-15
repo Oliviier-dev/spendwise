@@ -15,6 +15,13 @@
       "when": 1749955654372,
       "tag": "0001_flawless_thena",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1749960309925,
+      "tag": "0002_furry_ben_urich",
+      "breakpoints": true
     }
   ]
 }
