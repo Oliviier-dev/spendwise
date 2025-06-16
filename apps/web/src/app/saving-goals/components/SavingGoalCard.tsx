@@ -7,20 +7,28 @@ import type { SavingGoal } from "@/types/saving-goal";
 
 interface SavingGoalCardProps {
   goal: SavingGoal;
-  onUpdateAmount: (id: string, newAmount: number) => void;
+  onUpdateAmount: (id: string, newAmount: number) => Promise<void>;
 }
 
 export function SavingGoalCard({ goal, onUpdateAmount }: SavingGoalCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [newAmount, setNewAmount] = useState(goal.currentAmount.toString());
+  const [isUpdating, setIsUpdating] = useState(false);
   const progress = (goal.currentAmount / goal.targetAmount) * 100;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const amount = parseFloat(newAmount);
     if (!isNaN(amount) && amount >= 0) {
-      onUpdateAmount(goal.id, amount);
-      setIsEditing(false);
+      setIsUpdating(true);
+      try {
+        await onUpdateAmount(goal.id, amount);
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Failed to update amount:', error);
+      } finally {
+        setIsUpdating(false);
+      }
     }
   };
 
@@ -35,14 +43,14 @@ export function SavingGoalCard({ goal, onUpdateAmount }: SavingGoalCardProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Target Amount</p>
-            <p className="text-xl font-semibold">${goal.targetAmount.toFixed(2)}</p>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Target Amount</span>
+            <span className="font-medium">${goal.targetAmount}</span>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Current Amount</p>
-            <p className="text-xl font-semibold">${goal.currentAmount.toFixed(2)}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Current Amount</span>
+            <span className="font-medium">${goal.currentAmount}</span>
           </div>
         </div>
 
@@ -65,13 +73,17 @@ export function SavingGoalCard({ goal, onUpdateAmount }: SavingGoalCardProps) {
                   value={newAmount}
                   onChange={(e) => setNewAmount(e.target.value)}
                   className="flex-1"
+                  disabled={isUpdating}
                 />
-                <Button type="submit" size="sm">Save</Button>
+                <Button type="submit" size="sm" disabled={isUpdating}>
+                  {isUpdating ? "Saving..." : "Save"}
+                </Button>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setIsEditing(false)}
+                  disabled={isUpdating}
                 >
                   Cancel
                 </Button>

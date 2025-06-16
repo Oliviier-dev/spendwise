@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import type { Transaction } from "@/types/transaction";
+import type { SavingGoal } from "@/types/saving-goal";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -74,6 +75,31 @@ export const transactionsApi = {
   getTransactions: async () => {
     return apiRequest<Transaction[]>("/api/transactions", {
       method: "GET",
+    });
+  },
+};
+
+export const savingGoalsApi = {
+  createSavingGoal: async (data: Omit<SavingGoal, "id" | "createdAt" | "updatedAt">) => {
+    return apiRequest<SavingGoal>("/api/saving-goals", {
+      method: "POST",
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+  },
+
+  getSavingGoals: async () => {
+    return apiRequest<SavingGoal[]>("/api/saving-goals", {
+      method: "GET",
+      credentials: "include",
+    });
+  },
+
+  updateSavingGoal: async (id: string, data: Partial<SavingGoal>) => {
+    return apiRequest<SavingGoal>(`/api/saving-goals/${id}`, {
+      method: "PATCH",
+      credentials: "include",
+      body: JSON.stringify(data),
     });
   },
 }; 
