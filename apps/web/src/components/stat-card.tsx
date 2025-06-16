@@ -1,33 +1,33 @@
-import { ArrowDownIcon, ArrowUpIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface StatCardProps {
   title: string
   amount: string
-  growth: number
   className?: string
+  isLoading?: boolean
+  showSign?: boolean
 }
 
-export function StatCard({ title, amount, growth, className }: StatCardProps) {
-  const isPositive = growth >= 0
+export function StatCard({ title, amount, className, isLoading, showSign = false }: StatCardProps) {
+  const isNegative = amount.startsWith('-');
+  const displayAmount = showSign ? amount : amount.replace('-', '');
 
   return (
     <div className={cn("rounded-lg border bg-card p-6 shadow-sm", className)}>
       <div className="flex flex-col space-y-1.5">
         <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
         <div className="flex items-baseline justify-between">
-          <p className="text-2xl font-bold">{amount}</p>
-          <div className={cn(
-            "flex items-center text-sm",
-            isPositive ? "text-green-600" : "text-red-600"
-          )}>
-            {isPositive ? (
-              <ArrowUpIcon className="mr-1 h-4 w-4" />
-            ) : (
-              <ArrowDownIcon className="mr-1 h-4 w-4" />
-            )}
-            {Math.abs(growth)}%
-          </div>
+          {isLoading ? (
+            <Skeleton className="h-8 w-32" />
+          ) : (
+            <p className={cn(
+              "text-2xl font-bold",
+              showSign && (isNegative ? "text-red-600" : "text-green-600")
+            )}>
+              {displayAmount}
+            </p>
+          )}
         </div>
       </div>
     </div>

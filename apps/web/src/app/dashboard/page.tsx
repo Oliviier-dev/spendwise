@@ -1,13 +1,18 @@
 "use client"
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatCard } from "@/components/stat-card"
 import { ExpensePieChart } from "@/components/charts/expense-pie-chart";
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { BudgetProgress } from "@/components/charts/budget-progress";
+import { DateRangePicker } from "@/components/date-range-picker";
+import type { DateRange } from "react-day-picker";
+import { addMonths, format } from "date-fns";
+import { statsApi } from "@/lib/api-client";
+import { toast } from "sonner";
 
-// Mock data
+// Mock data for charts
 const mockExpenseData = [
   { name: "Food", value: 400 },
   { name: "Transport", value: 300 },
@@ -24,69 +29,85 @@ const mockTimeSeriesData = [
   { date: "2024-03-01", income: 1890, expense: 4800 },
 ];
 
+interface OverviewStats {
+  income: number;
+  expenses: number;
+  netIncome: number;
+}
+
 export default function Dashboard() {
-  // const router = useRouter();
-  // const { data: session, isPending } = authClient.useSession();
+  const today = new Date();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: today,
+    to: addMonths(today, 1),
+  });
 
+  const [stats, setStats] = useState<OverviewStats>({
+    income: 0,
+    expenses: 0,
+    netIncome: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // useEffect(() => {
-  //   if (!session && !isPending) {
-  //     router.push("/login");
-  //   }
-  // }, [session, isPending]);
+  useEffect(() => {
+    const fetchOverview = async () => {
+      if (!date?.from || !date?.to) return;
 
-  // if (isPending) {
-  //   return <div>Loading...</div>;
-  // }
+      try {
+        setIsLoading(true);
+        const response = await statsApi.getOverview({
+          startDate: format(date.from, 'yyyy-MM-dd'),
+          endDate: format(date.to, 'yyyy-MM-dd'),
+        });
+        setStats(response.data);
+      } catch (error) {
+        console.error("Failed to fetch overview stats:", error);
+        toast.error("Failed to fetch overview stats. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOverview();
+  }, [date]);
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Here's an overview of your financial status
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Here's an overview of your financial status
+          </p>
+        </div>
+        <DateRangePicker 
+          date={date}
+          onDateChange={setDate}
+        />
       </div>
       
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          title="Current Balance"
-          amount="$12,234.00"
-          growth={4.2}
+          title="Net Income"
+          amount={`$${Math.abs(stats.netIncome).toLocaleString()}`}
+          isLoading={isLoading}
+          showSign={true}
         />
         <StatCard
           title="Income"
-          amount="$4,500.00"
-          growth={2.1}
+          amount={`$${stats.income.toLocaleString()}`}
+          isLoading={isLoading}
         />
         <StatCard
           title="Expenses"
-          amount="$2,800.00"
-          growth={-2.3}
+          amount={`$${stats.expenses.toLocaleString()}`}
+          isLoading={isLoading}
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <IncomeExpenseChart data={mockTimeSeriesData} />
         <ExpensePieChart data={mockExpenseData} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <BudgetProgress
-          category="Food"
-          spent={400}
-          total={500}
-        />
-        <BudgetProgress
-          category="Transport"
-          spent={300}
-          total={300}
-        />
-        <BudgetProgress
-          category="Entertainment"
-          spent={200}
-          total={200}
-        />
       </div>
     </div>
   );

@@ -144,4 +144,30 @@ export const budgetsApi = {
     }
     return response.json();
   },
+};
+
+export const statsApi = {
+  getOverview: async (params: { startDate: string; endDate: string }) => {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_SERVER_URL}/api/stats?${new URLSearchParams({
+        type: 'overview',
+        startDate: params.startDate,
+        endDate: params.endDate,
+      })}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to fetch overview stats");
+    }
+
+    return response.json();
+  },
 }; 
