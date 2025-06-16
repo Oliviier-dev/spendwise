@@ -1,67 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SavingGoalCard } from "./components/SavingGoalCard";
 import { AddSavingGoal } from "./components/AddSavingGoal";
 import type { SavingGoal } from "@/types/saving-goal";
-
-// Dummy data for demonstration
-const initialGoals: SavingGoal[] = [
-  {
-    id: "1",
-    name: "New Car",
-    targetAmount: 25000,
-    currentAmount: 15000,
-    targetDate: "2024-12-31",
-    isCompleted: false,
-  },
-  {
-    id: "2",
-    name: "Vacation Fund",
-    targetAmount: 5000,
-    currentAmount: 5000,
-    targetDate: "2024-06-30",
-    isCompleted: true,
-  },
-  {
-    id: "3",
-    name: "Emergency Fund",
-    targetAmount: 10000,
-    currentAmount: 7500,
-    targetDate: "2024-09-30",
-    isCompleted: false,
-  },
-];
+import { savingGoalsApi } from "@/lib/api-client";
 
 export default function SavingGoalsPage() {
-  const [goals, setGoals] = useState<SavingGoal[]>(initialGoals);
+  const [goals, setGoals] = useState<SavingGoal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAddGoal = (name: string, targetAmount: number) => {
-    const newGoal: SavingGoal = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      targetAmount,
-      currentAmount: 0,
-      targetDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
-      isCompleted: false,
-    };
-    setGoals([...goals, newGoal]);
-  };
-
-  const handleUpdateAmount = (id: string, newAmount: number) => {
-    setGoals(
-      goals.map((goal) => {
-        if (goal.id === id) {
-          const isCompleted = newAmount >= goal.targetAmount;
-          return { ...goal, currentAmount: newAmount, isCompleted };
+  useEffect(() => {
+    const fetchGoals = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await savingGoalsApi.getSavingGoals();
+        if (response.data) {
+          setGoals(response.data);
+        } else {
+          console.error('Error in response:', response.message);
+          setError(response.message || "Failed to load saving goals");
         }
-        return goal;
-      })
-    );
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setError("Failed to load saving goals");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchGoals();
+  }, []);
+
+  const handleAddGoal = async (name: string, targetAmount: number, currentAmount: number, targetDate: string) => {
+    try {
+      const response = await savingGoalsApi.createSavingGoal({
+        name,
+        targetAmount,
+        currentAmount,
+        targetDate,
+        isCompleted: false,
+      });
+      
+      if (response.success && response.data) {
+        const newGoal = response.data;
+        setGoals(prevGoals => [...prevGoals, newGoal]);
+      } else {
+        console.error('Failed to create saving goal:', response.message);
+      }
+    } catch (error) {
+      console.error('Error creating saving goal:', error);
+    }
   };
 
-  const activeGoals = goals.filter((goal) => !goal.isCompleted);
-  const completedGoals = goals.filter((goal) => goal.isCompleted);
+  const handleUpdateAmount = async (id: string, newAmount: number) => {
+    try {
+      const response = await savingGoalsApi.updateSavingGoal(id, {
+        currentAmount: newAmount
+      });
+      
+      if (response.success && response.data) {
+        const updatedGoal = response.data;
+
+        setGoals(goals.map((goal) => {
+          return goal.id === id ? updatedGoal : goal;
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to update saving goal:', error);
+    }
+  };
+
+
+  const goalsWithCompleted = goals.map((goal) => {
+    const currentAmount = parseFloat(goal.currentAmount.toString());
+    const targetAmount = parseFloat(goal.targetAmount.toString());
+    const isCompleted = currentAmount >= targetAmount;
+    return {
+      ...goal,
+      isCompleted
+    };
+  });
+
+  const activeGoals = goalsWithCompleted.filter((goal) => {
+    return !goal.isCompleted;
+  });
+  const completedGoals = goalsWithCompleted.filter((goal) => {
+    return goal.isCompleted;
+  });
 
   return (
     <div className="container mx-auto py-10">
@@ -69,8 +96,8 @@ export default function SavingGoalsPage() {
         <h1 className="text-3xl font-bold">Saving Goals</h1>
         <AddSavingGoal onAddGoal={handleAddGoal} />
       </div>
-      
       <div className="space-y-8">
+        {loading && <div>Loading...</div>}
         {activeGoals.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-4">Active Goals</h2>
@@ -85,7 +112,6 @@ export default function SavingGoalsPage() {
             </div>
           </div>
         )}
-
         {completedGoals.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-4">Completed Goals</h2>
@@ -100,8 +126,7 @@ export default function SavingGoalsPage() {
             </div>
           </div>
         )}
-
-        {goals.length === 0 && (
+        {!loading && goals.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             No saving goals yet. Click the "Add Goal" button to create one.
           </div>

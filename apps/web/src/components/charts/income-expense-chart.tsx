@@ -2,18 +2,52 @@
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TimeSeriesData {
-  date: string;
+  month: string;  // Format: YYYY-MM
   income: number;
-  expense: number;
+  expenses: number;
 }
 
 interface IncomeExpenseChartProps {
   data: TimeSeriesData[];
+  isLoading?: boolean;
 }
 
-export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
+export function IncomeExpenseChart({ data, isLoading = false }: IncomeExpenseChartProps) {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Income vs Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If no data, show empty state
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Income vs Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            No data available for the selected period
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // For single month data, we'll show it as a bar chart
+  const isSingleMonth = data.length === 1;
+
   return (
     <Card>
       <CardHeader>
@@ -33,15 +67,29 @@ export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey="date" 
-                tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                dataKey="month" 
+                tickFormatter={(value) => {
+                  const [year, month] = value.split('-');
+                  const date = new Date(parseInt(year), parseInt(month) - 1);
+                  return date.toLocaleDateString('en-US', { 
+                    month: 'short',
+                    year: 'numeric'
+                  });
+                }}
               />
               <YAxis 
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) => `$${value.toLocaleString()}`}
               />
               <Tooltip 
-                formatter={(value: number) => [`$${value.toFixed(2)}`, '']}
-                labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                labelFormatter={(label) => {
+                  const [year, month] = label.split('-');
+                  const date = new Date(parseInt(year), parseInt(month) - 1);
+                  return date.toLocaleDateString('en-US', { 
+                    month: 'long',
+                    year: 'numeric'
+                  });
+                }}
               />
               <Legend />
               <Line
@@ -49,15 +97,15 @@ export function IncomeExpenseChart({ data }: IncomeExpenseChartProps) {
                 dataKey="income"
                 stroke="#00C49F"
                 strokeWidth={2}
-                dot={false}
+                dot={true}
                 name="Income"
               />
               <Line
                 type="monotone"
-                dataKey="expense"
+                dataKey="expenses"
                 stroke="#FF8042"
                 strokeWidth={2}
-                dot={false}
+                dot={true}
                 name="Expenses"
               />
             </LineChart>

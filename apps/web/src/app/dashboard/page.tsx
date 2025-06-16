@@ -1,92 +1,129 @@
 "use client"
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StatCard } from "@/components/stat-card"
 import { ExpensePieChart } from "@/components/charts/expense-pie-chart";
 import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { BudgetProgress } from "@/components/charts/budget-progress";
+import { DateRangePicker } from "@/components/date-range-picker";
+import type { DateRange } from "react-day-picker";
+import { addMonths, subMonths, format } from "date-fns";
+import { statsApi } from "@/lib/api-client";
+import { toast } from "sonner";
+import type { CategoryExpense } from "@/types/stats";
 
-// Mock data
-const mockExpenseData = [
-  { name: "Food", value: 400 },
-  { name: "Transport", value: 300 },
-  { name: "Entertainment", value: 200 },
-  { name: "Shopping", value: 100 },
-  { name: "Bills", value: 150 },
-];
+interface OverviewStats {
+  income: number;
+  expenses: number;
+  netIncome: number;
+}
 
-const mockTimeSeriesData = [
-  { date: "2024-01-01", income: 4000, expense: 2400 },
-  { date: "2024-01-15", income: 3000, expense: 1398 },
-  { date: "2024-02-01", income: 2000, expense: 9800 },
-  { date: "2024-02-15", income: 2780, expense: 3908 },
-  { date: "2024-03-01", income: 1890, expense: 4800 },
-];
+interface MonthlyTrend {
+  month: string;  // Format: YYYY-MM
+  income: number;
+  expenses: number;
+}
 
 export default function Dashboard() {
-  // const router = useRouter();
-  // const { data: session, isPending } = authClient.useSession();
+  const today = new Date();
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: today,
+    to: addMonths(today, 1),
+  });
 
+  const [stats, setStats] = useState<OverviewStats>({
+    income: 0,
+    expenses: 0,
+    netIncome: 0,
+  });
+  const [categoryExpenses, setCategoryExpenses] = useState<CategoryExpense[]>([]);
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [isLoadingTrends, setIsLoadingTrends] = useState(true);
 
-  // useEffect(() => {
-  //   if (!session && !isPending) {
-  //     router.push("/login");
-  //   }
-  // }, [session, isPending]);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!date?.from || !date?.to) return;
 
-  // if (isPending) {
-  //   return <div>Loading...</div>;
-  // }
+      try {
+        setIsLoading(true);
+        setIsLoadingCategories(true);
+        setIsLoadingTrends(true);
+
+        // For monthly trends, we'll fetch a wider range (3 months before and after)
+        const trendsStartDate = subMonths(date.from, 3);
+        const trendsEndDate = addMonths(date.to, 3);
+
+        const [overviewResponse, categoriesResponse, trendsResponse] = await Promise.all([
+          statsApi.getOverview({
+            startDate: format(date.from, 'yyyy-MM-dd'),
+            endDate: format(date.to, 'yyyy-MM-dd'),
+          }),
+          statsApi.getExpensesByCategory({
+            startDate: format(date.from, 'yyyy-MM-dd'),
+            endDate: format(date.to, 'yyyy-MM-dd'),
+          }),
+          statsApi.getMonthlyTrends({
+            startDate: format(trendsStartDate, 'yyyy-MM-dd'),
+            endDate: format(trendsEndDate, 'yyyy-MM-dd'),
+          })
+        ]);
+
+        setStats(overviewResponse.data);
+        setCategoryExpenses(categoriesResponse.data);
+        setMonthlyTrends(trendsResponse.data);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        toast.error("Failed to fetch dashboard data. Please try again.");
+      } finally {
+        setIsLoading(false);
+        setIsLoadingCategories(false);
+        setIsLoadingTrends(false);
+      }
+    };
+
+    fetchData();
+  }, [date]);
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">
-          Here's an overview of your financial status
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <p className="text-muted-foreground">
+            Here's an overview of your financial status
+          </p>
+        </div>
+        <DateRangePicker 
+          date={date}
+          onDateChange={setDate}
+        />
       </div>
       
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          title="Current Balance"
-          amount="$12,234.00"
-          growth={4.2}
+          title="Net Income"
+          amount={`$${stats.netIncome.toLocaleString()}`}
+          isLoading={isLoading}
+          showSign={true}
         />
         <StatCard
           title="Income"
-          amount="$4,500.00"
-          growth={2.1}
+          amount={`$${stats.income.toLocaleString()}`}
+          isLoading={isLoading}
         />
         <StatCard
           title="Expenses"
-          amount="$2,800.00"
-          growth={-2.3}
+          amount={`$${stats.expenses.toLocaleString()}`}
+          isLoading={isLoading}
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <IncomeExpenseChart data={mockTimeSeriesData} />
-        <ExpensePieChart data={mockExpenseData} />
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <BudgetProgress
-          category="Food"
-          spent={400}
-          total={500}
-        />
-        <BudgetProgress
-          category="Transport"
-          spent={300}
-          total={300}
-        />
-        <BudgetProgress
-          category="Entertainment"
-          spent={200}
-          total={200}
-        />
+        <IncomeExpenseChart data={monthlyTrends} isLoading={isLoadingTrends} />
+        <ExpensePieChart data={categoryExpenses} isLoading={isLoadingCategories} />
       </div>
     </div>
   );

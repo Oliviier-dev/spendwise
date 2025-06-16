@@ -18,6 +18,8 @@ import {
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import type { Transaction } from "@/types/transaction";
+import { toast } from "sonner";
+import { SERVER_URL } from "@/config";
 
 interface AddTransactionModalProps {
   onAddTransaction: (transaction: Omit<Transaction, "id">) => void;
@@ -37,6 +39,7 @@ export function AddTransactionModal({
   categories,
 }: AddTransactionModalProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     description: "",
     amount: "",
@@ -45,20 +48,47 @@ export function AddTransactionModal({
     date: new Date().toISOString().split("T")[0],
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onAddTransaction({
-      ...formData,
-      amount: parseFloat(formData.amount),
-    });
-    setOpen(false);
-    setFormData({
-      description: "",
-      amount: "",
-      type: "expense",
-      category: "",
-      date: new Date().toISOString().split("T")[0],
-    });
+    setLoading(true);
+    
+    try {
+      const transactionData = {
+        ...formData,
+        amount: parseFloat(formData.amount),
+      };
+      
+      const response = await fetch(`${SERVER_URL}/api/transactions`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionData),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success("Transaction added successfully");
+        onAddTransaction(data.data);
+        setOpen(false);
+        setFormData({
+          description: "",
+          amount: "",
+          type: "expense",
+          category: "",
+          date: new Date().toISOString().split("T")[0],
+        });
+      } else {
+        toast.error(data.message || "Failed to add transaction");
+      }
+    } catch (error) {
+      toast.error("Failed to add transaction");
+      console.error("Error adding transaction:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,8 +156,9 @@ export function AddTransactionModal({
               }
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select a category" />
               </SelectTrigger>
+
               <SelectContent>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
@@ -147,8 +178,8 @@ export function AddTransactionModal({
               required
             />
           </div>
-          <Button type="submit" className="w-full">
-            Add Transaction
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Adding..." : "Add Transaction"}
           </Button>
         </form>
       </DialogContent>

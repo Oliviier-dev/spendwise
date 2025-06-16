@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
       headers: {
         "Access-Control-Allow-Credentials": "true",
         "Access-Control-Allow-Origin": process.env.CORS_ORIGIN || "",
-        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     });
@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
   // Add CORS headers for all responses
   res.headers.set("Access-Control-Allow-Credentials", "true");
   res.headers.set("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "");
-  res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   // Handle dashboard authentication

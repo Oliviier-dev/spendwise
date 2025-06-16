@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { budgets } from "@/db/schema/budgets";
+import { transactions } from "@/db/schema/transactions";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, gte, lte } from "drizzle-orm";
 import { withAuth } from "@/lib/auth-middleware";
 
 const budgetSchema = z.object({
@@ -15,6 +16,19 @@ async function createBudget(req: Request, context: { user: any }) {
   try {
     const body = await req.json();
     const validatedData = budgetSchema.parse(body);
+
+    // Check if the budget is for a past month
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear().toString();
+    const currentMonth = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+    
+    if (validatedData.year < currentYear || 
+        (validatedData.year === currentYear && validatedData.month < currentMonth)) {
+      return NextResponse.json(
+        { message: "Cannot create budget for past months" },
+        { status: 400 }
+      );
+    }
 
     // Check if budget already exists for this month
     const existingBudget = await db
@@ -75,16 +89,39 @@ async function getBudgets(req: Request, context: { user: any }) {
       conditions.push(eq(budgets.year, year));
     }
 
-    const query = db
-      .select()
+    // Get budgets with spent amounts
+    const userBudgets = await db
+      .select({
+        id: budgets.id,
+        amount: budgets.amount,
+        month: budgets.month,
+        year: budgets.year,
+        createdAt: budgets.createdAt,
+        updatedAt: budgets.updatedAt,
+        spent: sql<number>`COALESCE(
+          (
+            SELECT SUM(CAST(${transactions.amount} AS DECIMAL))
+            FROM ${transactions}
+            WHERE ${transactions.userId} = ${context.user.id}
+            AND ${transactions.type} = 'expense'
+            AND EXTRACT(YEAR FROM ${transactions.date})::text = ${budgets.year}
+            AND EXTRACT(MONTH FROM ${transactions.date})::text = ${budgets.month}
+          ),
+          0
+        )`
+      })
       .from(budgets)
       .where(and(...conditions));
 
-    const userBudgets = await query;
+    // Calculate remaining amounts
+    const budgetsWithRemaining = userBudgets.map(budget => ({
+      ...budget,
+      remaining: Number(budget.amount) - Number(budget.spent)
+    }));
 
     return NextResponse.json({
       message: "Budgets retrieved successfully",
-      data: userBudgets
+      data: budgetsWithRemaining
     });
   } catch (error) {
     console.error("[BUDGETS_GET] Error:", error);

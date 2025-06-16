@@ -5,4 +5,6 @@ export interface SavingGoal {
   currentAmount: number;
   targetDate: string;
   isCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
 } 

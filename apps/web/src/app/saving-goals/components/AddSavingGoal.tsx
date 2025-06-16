@@ -14,21 +14,26 @@ import {
 } from "@/components/ui/dialog";
 
 interface AddSavingGoalProps {
-  onAddGoal: (name: string, targetAmount: number) => void;
+  onAddGoal: (name: string, targetAmount: number, currentAmount: number, targetDate: string) => void;
 }
 
 export function AddSavingGoal({ onAddGoal }: AddSavingGoalProps) {
   const [name, setName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
+  const [currentAmount, setCurrentAmount] = useState("");
+  const [targetDate, setTargetDate] = useState("");
   const [open, setOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const amount = parseFloat(targetAmount);
-    if (name.trim() && !isNaN(amount) && amount > 0) {
-      onAddGoal(name.trim(), amount);
+    const targetAmountValue = parseFloat(targetAmount);
+    const currentAmountValue = parseFloat(currentAmount);
+    if (name.trim() && !isNaN(targetAmountValue) && targetAmountValue > 0 && !isNaN(currentAmountValue) && currentAmountValue >= 0 && targetDate) {
+      onAddGoal(name.trim(), targetAmountValue, currentAmountValue, targetDate);
       setName("");
       setTargetAmount("");
+      setCurrentAmount("");
+      setTargetDate("");
       setOpen(false);
     }
   };
@@ -66,6 +71,29 @@ export function AddSavingGoal({ onAddGoal }: AddSavingGoalProps) {
               placeholder="Enter target amount"
               min="0"
               step="0.01"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="currentAmount">Current Amount</Label>
+            <Input
+              id="currentAmount"
+              type="number"
+              value={currentAmount}
+              onChange={(e) => setCurrentAmount(e.target.value)}
+              placeholder="Enter current amount"
+              min="0"
+              step="0.01"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="targetDate">Target Date</Label>
+            <Input
+              id="targetDate"
+              type="date"
+              value={targetDate}
+              onChange={(e) => setTargetDate(e.target.value)}
               required
             />
           </div>
