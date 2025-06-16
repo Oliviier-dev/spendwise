@@ -37,10 +37,9 @@ export default function BudgetsPage() {
 
   const currentMonthBudget = useMemo(() => {
     const now = new Date();
-    const currentYear = now.getFullYear();
-    const currentMonth = now.getMonth() + 1; // 1-12
-    const currentMonthStr = currentMonth.toString().padStart(2, '0');
-    const currentDateStr = `${currentYear}-${currentMonthStr}`;
+    const currentYear = now.getFullYear().toString();
+    const currentMonth = (now.getMonth() + 1).toString().padStart(2, '0');
+    const currentDateStr = `${currentYear}-${currentMonth}`;
 
     // First try to find current month's budget
     const currentMonthBudget = budgets.find(b => b.month === currentDateStr);
@@ -66,6 +65,22 @@ export default function BudgetsPage() {
     }
   };
 
+  const handleUpdateBudget = async (id: string, data: { amount: number }) => {
+    try {
+      const response = await budgetsApi.updateBudget(id, data);
+      setBudgets(prevBudgets => 
+        prevBudgets.map(budget => 
+          budget.id === id ? response.data : budget
+        )
+      );
+      setIsUpdateModalOpen(false);
+      toast.success("Budget updated successfully");
+    } catch (error) {
+      console.error("Failed to update budget:", error);
+      toast.error("Failed to update budget. Please try again.");
+    }
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -86,23 +101,23 @@ export default function BudgetsPage() {
         />
       )}
 
-      {/* Budgets Table */}
       <Card>
         <CardHeader>
           <CardTitle>All Budgets</CardTitle>
         </CardHeader>
         <CardContent>
-          <BudgetTable 
-            budgets={budgets}
-            onRowClick={(budget) => {
-              setSelectedBudget(budget);
-              setIsUpdateModalOpen(true);
-            }}
-          />
+          <div className="overflow-x-auto">
+            <BudgetTable 
+              budgets={budgets}
+              onRowClick={(budget) => {
+                setSelectedBudget(budget);
+                setIsUpdateModalOpen(true);
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 
-      {/* Modals */}
       <AddBudgetModal 
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen}
@@ -113,6 +128,7 @@ export default function BudgetsPage() {
         open={isUpdateModalOpen}
         onOpenChange={setIsUpdateModalOpen}
         budget={selectedBudget}
+        onSubmit={handleUpdateBudget}
       />
     </div>
   );
