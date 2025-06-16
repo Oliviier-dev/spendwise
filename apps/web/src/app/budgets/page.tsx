@@ -68,9 +68,20 @@ export default function BudgetsPage() {
   const handleUpdateBudget = async (id: string, data: { amount: number }) => {
     try {
       const response = await budgetsApi.updateBudget(id, data);
+      const updatedBudget = response.data;
+      
+      const spent = updatedBudget.spent || 0;
+      const remaining = updatedBudget.amount - spent;
+      
+      const completeBudget = {
+        ...updatedBudget,
+        spent,
+        remaining
+      };
+
       setBudgets(prevBudgets => 
         prevBudgets.map(budget => 
-          budget.id === id ? response.data : budget
+          budget.id === id ? completeBudget : budget
         )
       );
       setIsUpdateModalOpen(false);

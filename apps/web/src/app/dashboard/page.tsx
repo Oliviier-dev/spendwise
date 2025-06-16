@@ -8,7 +8,7 @@ import { IncomeExpenseChart } from "@/components/charts/income-expense-chart";
 import { BudgetProgress } from "@/components/charts/budget-progress";
 import { DateRangePicker } from "@/components/date-range-picker";
 import type { DateRange } from "react-day-picker";
-import { addMonths, format } from "date-fns";
+import { addMonths, subMonths, format } from "date-fns";
 import { statsApi } from "@/lib/api-client";
 import { toast } from "sonner";
 import type { CategoryExpense } from "@/types/stats";
@@ -17,6 +17,12 @@ interface OverviewStats {
   income: number;
   expenses: number;
   netIncome: number;
+}
+
+interface MonthlyTrend {
+  month: string;  // Format: YYYY-MM
+  income: number;
+  expenses: number;
 }
 
 export default function Dashboard() {
@@ -32,8 +38,10 @@ export default function Dashboard() {
     netIncome: 0,
   });
   const [categoryExpenses, setCategoryExpenses] = useState<CategoryExpense[]>([]);
+  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [isLoadingTrends, setIsLoadingTrends] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,8 +50,13 @@ export default function Dashboard() {
       try {
         setIsLoading(true);
         setIsLoadingCategories(true);
+        setIsLoadingTrends(true);
 
-        const [overviewResponse, categoriesResponse] = await Promise.all([
+        // For monthly trends, we'll fetch a wider range (3 months before and after)
+        const trendsStartDate = subMonths(date.from, 3);
+        const trendsEndDate = addMonths(date.to, 3);
+
+        const [overviewResponse, categoriesResponse, trendsResponse] = await Promise.all([
           statsApi.getOverview({
             startDate: format(date.from, 'yyyy-MM-dd'),
             endDate: format(date.to, 'yyyy-MM-dd'),
@@ -51,17 +64,23 @@ export default function Dashboard() {
           statsApi.getExpensesByCategory({
             startDate: format(date.from, 'yyyy-MM-dd'),
             endDate: format(date.to, 'yyyy-MM-dd'),
+          }),
+          statsApi.getMonthlyTrends({
+            startDate: format(trendsStartDate, 'yyyy-MM-dd'),
+            endDate: format(trendsEndDate, 'yyyy-MM-dd'),
           })
         ]);
 
         setStats(overviewResponse.data);
         setCategoryExpenses(categoriesResponse.data);
+        setMonthlyTrends(trendsResponse.data);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
         toast.error("Failed to fetch dashboard data. Please try again.");
       } finally {
         setIsLoading(false);
         setIsLoadingCategories(false);
+        setIsLoadingTrends(false);
       }
     };
 
@@ -86,7 +105,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
           title="Net Income"
-          amount={`$${Math.abs(stats.netIncome).toLocaleString()}`}
+          amount={`$${stats.netIncome.toLocaleString()}`}
           isLoading={isLoading}
           showSign={true}
         />
@@ -103,7 +122,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <IncomeExpenseChart data={[]} />
+        <IncomeExpenseChart data={monthlyTrends} isLoading={isLoadingTrends} />
         <ExpensePieChart data={categoryExpenses} isLoading={isLoadingCategories} />
       </div>
     </div>

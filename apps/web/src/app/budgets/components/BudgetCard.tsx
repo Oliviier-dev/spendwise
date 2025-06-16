@@ -11,7 +11,7 @@ interface BudgetCardProps {
 }
 
 export function BudgetCard({ budget, onUpdateClick }: BudgetCardProps) {
-  const date = new Date(`${budget.year}-${budget.month}-01`);
+  const date = new Date(budget.month + "-01");
   const monthYear = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (

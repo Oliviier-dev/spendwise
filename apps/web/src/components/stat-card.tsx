@@ -10,8 +10,10 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, amount, className, isLoading, showSign = false }: StatCardProps) {
-  const isNegative = amount.startsWith('-');
-  const displayAmount = showSign ? amount : amount.replace('-', '');
+  // Remove the $ and convert to number to check if negative
+  const numericAmount = parseFloat(amount.replace('$', '').replace(/,/g, ''));
+  const isNegative = numericAmount < 0;
+  const displayAmount = showSign ? amount.replace('-', '') : amount;
 
   return (
     <div className={cn("rounded-lg border bg-card p-6 shadow-sm", className)}>
