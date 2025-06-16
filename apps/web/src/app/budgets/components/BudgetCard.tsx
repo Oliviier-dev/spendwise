@@ -10,10 +10,9 @@ interface BudgetCardProps {
 }
 
 export function BudgetCard({ budget, onUpdateClick }: BudgetCardProps) {
-  // Format the month and year for display
-  const formattedDate = new Date(
-    `${budget.year}-${budget.month.toString().padStart(2, "0")}-01`
-  ).toLocaleDateString("en-US", {
+  // Parse the YYYY-MM format to a proper date
+  const budgetDate = new Date(budget.month + "-01");
+  const formattedDate = budgetDate.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
   });
@@ -40,7 +39,7 @@ export function BudgetCard({ budget, onUpdateClick }: BudgetCardProps) {
               {new Intl.NumberFormat("en-US", {
                 style: "currency",
                 currency: "USD",
-              }).format(budget.spent)}
+              }).format(budget.spent || 0)}
             </p>
           </div>
           <div>
@@ -49,7 +48,7 @@ export function BudgetCard({ budget, onUpdateClick }: BudgetCardProps) {
               {new Intl.NumberFormat("en-US", {
                 style: "currency",
                 currency: "USD",
-              }).format(budget.remaining)}
+              }).format(budget.remaining || 0)}
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus } from "lucide-react";
@@ -9,62 +9,62 @@ import { AddBudgetModal } from "./components/AddBudgetModal";
 import { UpdateBudgetModal } from "./components/UpdateBudgetModal";
 import { BudgetCard } from "./components/BudgetCard";
 import type { Budget } from "./components/columns";
+import { budgetsApi } from "@/lib/api-client";
+import { toast } from "sonner";
 
 export default function BudgetsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Mock data for budgets table
-  const budgets = [
-    {
-      id: "1",
-      amount: 5000,
-      spent: 2500,
-      remaining: 2500,
-      month: "03",
-      year: "2024"
-    },
-    {
-      id: "2",
-      amount: 6000,
-      spent: 3000,
-      remaining: 3000,
-      month: "08",
-      year: "2024"
-    },
-    {
-      id: "3",
-      amount: 7000,
-      spent: 3500,
-      remaining: 3500,
-      month: "12",
-      year: "2024"
-    },
-  ];
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      try {
+        const response = await budgetsApi.getBudgets();
+        setBudgets(response.data);
+      } catch (error) {
+        console.error("Failed to fetch budgets:", error);
+        toast.error("Failed to fetch budgets. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // Find the current, next, or most recent past month's budget
+    fetchBudgets();
+  }, []);
+
   const currentMonthBudget = useMemo(() => {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1; // 1-12
+    const currentMonthStr = currentMonth.toString().padStart(2, '0');
+    const currentDateStr = `${currentYear}-${currentMonthStr}`;
 
-    // Sort budgets by date (newest first)
-    const sortedBudgets = [...budgets].sort((a, b) => {
-      const dateA = new Date(`${a.year}-${a.month}-01`);
-      const dateB = new Date(`${b.year}-${b.month}-01`);
-      return dateB.getTime() - dateA.getTime();
-    });
+    // First try to find current month's budget
+    const currentMonthBudget = budgets.find(b => b.month === currentDateStr);
+    if (currentMonthBudget) return currentMonthBudget;
 
-    // First try to find current or future budget
-    const futureBudget = sortedBudgets.find(budget => {
-      const budgetDate = new Date(`${budget.year}-${budget.month}-01`);
-      return budgetDate >= currentDate;
-    });
+    // Then try to find any future budget
+    const futureBudget = budgets.find(b => b.month >= currentDateStr);
+    if (futureBudget) return futureBudget;
 
-    // If no future budget found, return the most recent past budget
-    return futureBudget || sortedBudgets[0] || null;
+    // If no current or future budget, return the most recent past budget
+    return budgets.length > 0 ? budgets.sort((a, b) => b.month.localeCompare(a.month))[0] : null;
   }, [budgets]);
+
+  const handleAddBudget = async (data: { amount: number; month: string; year: string }) => {
+    try {
+      const response = await budgetsApi.createBudget(data);
+      setBudgets(prevBudgets => [...prevBudgets, response.data]);
+      setIsAddModalOpen(false);
+      toast.success("Budget created successfully");
+    } catch (error) {
+      console.error("Failed to create budget:", error);
+      toast.error("Failed to create budget. Please try again.");
+    }
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -76,7 +76,6 @@ export default function BudgetsPage() {
         </Button>
       </div>
 
-      {/* Current/Next/Past Month Budget Card */}
       {currentMonthBudget && (
         <BudgetCard 
           budget={currentMonthBudget}
@@ -107,6 +106,7 @@ export default function BudgetsPage() {
       <AddBudgetModal 
         open={isAddModalOpen} 
         onOpenChange={setIsAddModalOpen}
+        onSubmit={handleAddBudget}
       />
       
       <UpdateBudgetModal 
