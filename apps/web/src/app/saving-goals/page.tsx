@@ -110,7 +110,7 @@ export default function SavingGoalsPage() {
         <AddSavingGoal onAddGoal={handleAddGoal} />
       </div>
       <div className="space-y-8">
-        {loading && <div>Loading...</div>}
+        {loading && <div className="text-center py-12 text-muted-foreground">Loading...</div>}
         {activeGoals.length > 0 && (
           <div>
             <h2 className="text-xl font-semibold mb-4">Active Goals</h2>

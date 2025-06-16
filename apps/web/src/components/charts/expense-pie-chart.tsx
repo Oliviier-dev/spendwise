@@ -60,6 +60,21 @@ export function ExpensePieChart({ data, isLoading = false }: ExpensePieChartProp
     );
   }
 
+  if (finalData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Expenses by Category</CardTitle>
+        </CardHeader>
+        <CardContent className="flex items-center justify-center h-[300px]">
+          <p className="text-muted-foreground text-center">
+            No expense data available for this period
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>

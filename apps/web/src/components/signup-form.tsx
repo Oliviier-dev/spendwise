@@ -48,8 +48,8 @@ export function SignUpForm({ onSwitchToSignIn }: SignUpFormProps) {
         const result = await authApi.signUp(value.email, value.password, value.name);
         
         if (result.success) {
-          toast.success("Sign up successful!");
-          router.push("/dashboard");
+          toast.success("Sign up successful! Please login.");
+          router.push("/login");
         } else {
           toast.error(result.message || "Failed to sign up");
         }

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Sidebar } from "@/components/ui/sidebar"
@@ -12,6 +12,8 @@ import {
   Target,
   LogOut,
 } from "lucide-react"
+import { authClient } from "@/lib/auth-client"
+import { toast } from "sonner"
 
 const navigation = [
   {
@@ -38,6 +40,23 @@ const navigation = [
 
 export function MainSidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("Logged out successfully")
+            router.push("/login")
+          },
+        },
+      })
+    } catch (error) {
+      console.error("Logout error:", error)
+      toast.error("Failed to log out. Please try again.")
+    }
+  }
 
   return (
     <Sidebar>
@@ -69,10 +88,7 @@ export function MainSidebar() {
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-base text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50"
-            onClick={() => {
-              // Handle logout logic
-              console.log("Logout clicked")
-            }}
+            onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />
             Logout
