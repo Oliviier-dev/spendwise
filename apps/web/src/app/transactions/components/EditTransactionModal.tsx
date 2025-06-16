@@ -15,16 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { Transaction } from "@/types/transaction";
 import { toast } from "sonner";
 import { SERVER_URL } from "@/config";
 import { formatCurrency } from "@/lib/utils";
 
-interface AddTransactionModalProps {
-  onAddTransaction: (transaction: Omit<Transaction, "id">) => void;
+interface EditTransactionModalProps {
+  transaction: Transaction;
+  onTransactionUpdated: () => void;
   categories: string[];
+  trigger?: React.ReactNode;
 }
 
 type FormData = {
@@ -35,19 +37,33 @@ type FormData = {
   date: string;
 };
 
-export function AddTransactionModal({
-  onAddTransaction,
+export function EditTransactionModal({
+  transaction,
+  onTransactionUpdated,
   categories,
-}: AddTransactionModalProps) {
+  trigger,
+}: EditTransactionModalProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    description: "",
-    amount: "",
-    type: "expense",
-    category: "",
-    date: new Date().toISOString().split("T")[0],
+    description: transaction.description,
+    amount: formatCurrency(transaction.amount),
+    type: transaction.type,
+    category: transaction.category,
+    date: new Date(transaction.date).toISOString().split("T")[0],
   });
+
+  useEffect(() => {
+    if (open) {
+      setFormData({
+        description: transaction.description,
+        amount: formatCurrency(transaction.amount),
+        type: transaction.type,
+        category: transaction.category,
+        date: new Date(transaction.date).toISOString().split("T")[0],
+      });
+    }
+  }, [open, transaction]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +75,8 @@ export function AddTransactionModal({
         amount: parseFloat(formData.amount),
       };
       
-      const response = await fetch(`${SERVER_URL}/api/transactions`, {
-        method: "POST",
+      const response = await fetch(`${SERVER_URL}/api/transactions/${transaction.id}`, {
+        method: "PATCH",
         credentials: "include",
         headers: {
           "Content-Type": "application/json",
@@ -71,22 +87,15 @@ export function AddTransactionModal({
       const data = await response.json();
       
       if (response.ok) {
-        toast.success("Transaction added successfully");
-        onAddTransaction(data.data);
+        toast.success("Transaction updated successfully");
+        onTransactionUpdated();
         setOpen(false);
-        setFormData({
-          description: "",
-          amount: "",
-          type: "expense",
-          category: "",
-          date: new Date().toISOString().split("T")[0],
-        });
       } else {
-        toast.error(data.message || "Failed to add transaction");
+        toast.error(data.message || "Failed to update transaction");
       }
     } catch (error) {
-      toast.error("Failed to add transaction");
-      console.error("Error adding transaction:", error);
+      toast.error("Failed to update transaction");
+      console.error("Error updating transaction:", error);
     } finally {
       setLoading(false);
     }
@@ -95,14 +104,15 @@ export function AddTransactionModal({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Transaction
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add New Transaction</DialogTitle>
+          <DialogTitle>Edit Transaction</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -159,7 +169,6 @@ export function AddTransactionModal({
               <SelectTrigger>
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
-
               <SelectContent>
                 {categories.map((category) => (
                   <SelectItem key={category} value={category}>
@@ -180,7 +189,7 @@ export function AddTransactionModal({
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Adding..." : "Add Transaction"}
+            {loading ? "Saving..." : "Update Transaction"}
           </Button>
         </form>
       </DialogContent>

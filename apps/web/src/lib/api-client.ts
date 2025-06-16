@@ -77,6 +77,19 @@ export const transactionsApi = {
       method: "GET",
     });
   },
+  
+  updateTransaction: async (id: string, transaction: Partial<Omit<Transaction, "id">>) => {
+    return apiRequest<Transaction>(`/api/transactions/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(transaction),
+    });
+  },
+  
+  deleteTransaction: async (id: string) => {
+    return apiRequest(`/api/transactions/${id}`, {
+      method: "DELETE",
+    });
+  },
 };
 
 export const savingGoalsApi = {

@@ -25,51 +25,82 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-
-const columns: ColumnDef<Transaction>[] = [
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => {
-      return new Date(row.getValue("date")).toLocaleDateString();
-    },
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-  },
-  {
-    accessorKey: "amount",
-    header: "Amount",
-    cell: ({ row }) => {
-      const amount = parseFloat(row.getValue("amount"));
-      const type = row.original.type;
-      return (
-        <div
-          className={`font-medium ${
-            type === "income" ? "text-green-600" : "text-red-600"
-          }`}
-        >
-          {amount.toFixed(2)}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "category",
-    header: "Category",
-    cell: ({ row }) => {
-      return <Badge variant="secondary">{row.getValue("category")}</Badge>;
-    },
-  },
-];
+import { EditTransactionModal } from "./EditTransactionModal";
+import { DeleteTransactionDialog } from "./DeleteTransactionDialog";
+import { formatCurrency } from "@/lib/utils";
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  onTransactionUpdated: () => void;
+  onTransactionDeleted: () => void;
+  categories: string[];
 }
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({
+  transactions,
+  onTransactionUpdated,
+  onTransactionDeleted,
+  categories,
+}: TransactionTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
+
+  const columns: ColumnDef<Transaction>[] = [
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        return new Date(row.getValue("date")).toLocaleDateString();
+      },
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+    },
+    {
+      accessorKey: "amount",
+      header: "Amount",
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("amount"));
+        const type = row.original.type;
+        return (
+          <div
+            className={`font-medium ${
+              type === "income" ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            ${formatCurrency(amount)}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        return <Badge variant="secondary">{row.getValue("category")}</Badge>;
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const transaction = row.original;
+        return (
+          <div className="flex items-center justify-end space-x-1">
+            <EditTransactionModal 
+              transaction={transaction} 
+              onTransactionUpdated={onTransactionUpdated}
+              categories={categories}
+            />
+            <DeleteTransactionDialog 
+              transaction={transaction} 
+              onTransactionDeleted={onTransactionDeleted} 
+            />
+          </div>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data: transactions,

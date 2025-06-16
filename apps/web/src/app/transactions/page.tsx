@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { DateRange } from "react-day-picker";
 import { TransactionFilters } from "./components/TransactionFilters";
 import { TransactionTable } from "./components/TransactionTable";
@@ -34,12 +34,9 @@ export default function TransactionsPage() {
   const [selectedType, setSelectedType] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  useEffect(() => {
-    fetchTransactions();
-  }, []);
-
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${SERVER_URL}/api/transactions`, {
@@ -63,11 +60,22 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions, refreshTrigger]);
 
   const handleAddTransaction = (newTransaction: Omit<Transaction, "id">) => {
-    // Refresh the transactions list
-    fetchTransactions();
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleTransactionUpdated = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleTransactionDeleted = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleClearDateRange = () => {
@@ -122,7 +130,12 @@ export default function TransactionsPage() {
         ) : transactions.length === 0 ? (
           <div className="text-center py-8">No transactions found. Add your first transaction!</div>
         ) : (
-          <TransactionTable transactions={filteredTransactions} />
+          <TransactionTable 
+            transactions={filteredTransactions} 
+            onTransactionUpdated={handleTransactionUpdated}
+            onTransactionDeleted={handleTransactionDeleted}
+            categories={categories.filter(cat => cat !== "All")}
+          />
         )}
       </div>
     </div>

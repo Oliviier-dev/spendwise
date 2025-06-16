@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-export async function middleware(request: NextRequest) {
-  console.log("CORS_ORIGIN:", process.env.CORS_ORIGIN);
-  
+export async function middleware(request: NextRequest) {  
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
     return new NextResponse(null, {
