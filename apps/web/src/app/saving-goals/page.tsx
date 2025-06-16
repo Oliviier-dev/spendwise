@@ -1,37 +1,39 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SavingGoalCard } from "./components/SavingGoalCard";
 import { AddSavingGoal } from "./components/AddSavingGoal";
 import type { SavingGoal } from "@/types/saving-goal";
 import { savingGoalsApi } from "@/lib/api-client";
+import { toast } from "sonner";
 
 export default function SavingGoalsPage() {
   const [goals, setGoals] = useState<SavingGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchGoals = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await savingGoalsApi.getSavingGoals();
-        if (response.data) {
-          setGoals(response.data);
-        } else {
-          console.error('Error in response:', response.message);
-          setError(response.message || "Failed to load saving goals");
-        }
-      } catch (err) {
-        console.error('Fetch error:', err);
-        setError("Failed to load saving goals");
-      } finally {
-        setLoading(false);
+  const fetchGoals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await savingGoalsApi.getSavingGoals();
+      if (response.data) {
+        setGoals(response.data);
+      } else {
+        console.error('Error in response:', response.message);
+        setError(response.message || "Failed to load saving goals");
       }
-    };
-    fetchGoals();
+    } catch (err) {
+      console.error('Fetch error:', err);
+      setError("Failed to load saving goals");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchGoals();
+  }, [fetchGoals]);
 
   const handleAddGoal = async (name: string, targetAmount: number, currentAmount: number, targetDate: string) => {
     try {
@@ -43,14 +45,17 @@ export default function SavingGoalsPage() {
         isCompleted: false,
       });
       
-      if (response.success && response.data) {
+      if (response.data) {
         const newGoal = response.data;
         setGoals(prevGoals => [...prevGoals, newGoal]);
+        toast.success("Saving goal created successfully");
       } else {
         console.error('Failed to create saving goal:', response.message);
+        toast.error("Failed to create saving goal");
       }
     } catch (error) {
       console.error('Error creating saving goal:', error);
+      toast.error("Failed to create saving goal");
     }
   };
 
@@ -60,18 +65,26 @@ export default function SavingGoalsPage() {
         currentAmount: newAmount
       });
       
-      if (response.success && response.data) {
+      if (response.data) {
         const updatedGoal = response.data;
 
-        setGoals(goals.map((goal) => {
+        setGoals(prevGoals => prevGoals.map((goal) => {
           return goal.id === id ? updatedGoal : goal;
         }));
+        toast.success("Saving goal updated successfully");
+      } else {
+        toast.error("Failed to update saving goal");
       }
     } catch (error) {
       console.error('Failed to update saving goal:', error);
+      toast.error("Failed to update saving goal");
     }
   };
 
+  const handleSavingGoalDeleted = (id: string) => {
+    setGoals(prevGoals => prevGoals.filter(goal => goal.id !== id));
+    toast.success("Saving goal deleted successfully");
+  };
 
   const goalsWithCompleted = goals.map((goal) => {
     const currentAmount = parseFloat(goal.currentAmount.toString());
@@ -107,6 +120,7 @@ export default function SavingGoalsPage() {
                   key={goal.id}
                   goal={goal}
                   onUpdateAmount={handleUpdateAmount}
+                  onSavingGoalDeleted={handleSavingGoalDeleted}
                 />
               ))}
             </div>
@@ -121,6 +135,7 @@ export default function SavingGoalsPage() {
                   key={goal.id}
                   goal={goal}
                   onUpdateAmount={handleUpdateAmount}
+                  onSavingGoalDeleted={handleSavingGoalDeleted}
                 />
               ))}
             </div>

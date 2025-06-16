@@ -115,6 +115,13 @@ export const savingGoalsApi = {
       body: JSON.stringify(data),
     });
   },
+  
+  deleteSavingGoal: async (id: string) => {
+    return apiRequest(`/api/saving-goals/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+  },
 };
 
 export const budgetsApi = {

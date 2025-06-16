@@ -4,13 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import type { SavingGoal } from "@/types/saving-goal";
+import { DeleteSavingGoalDialog } from "./DeleteSavingGoalDialog";
+import { formatCurrency } from "@/lib/utils";
 
 interface SavingGoalCardProps {
   goal: SavingGoal;
   onUpdateAmount: (id: string, newAmount: number) => Promise<void>;
+  onSavingGoalDeleted: (id: string) => void;
 }
 
-export function SavingGoalCard({ goal, onUpdateAmount }: SavingGoalCardProps) {
+export function SavingGoalCard({ 
+  goal, 
+  onUpdateAmount, 
+  onSavingGoalDeleted 
+}: SavingGoalCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [newAmount, setNewAmount] = useState(goal.currentAmount.toString());
   const [isUpdating, setIsUpdating] = useState(false);
@@ -37,29 +44,28 @@ export function SavingGoalCard({ goal, onUpdateAmount }: SavingGoalCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>{goal.name}</span>
-          {goal.isCompleted && (
-            <span className="text-sm font-normal text-green-600">Completed</span>
-          )}
+          <div className="flex items-center">
+            {goal.isCompleted && (
+              <span className="text-sm font-normal text-green-600 mr-2">Completed</span>
+            )}
+            <DeleteSavingGoalDialog 
+              goal={goal}
+              onSavingGoalDeleted={() => onSavingGoalDeleted(goal.id)}
+            />
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Target Amount</span>
-            <span className="font-medium">${goal.targetAmount}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Current Amount</span>
-            <span className="font-medium">${goal.currentAmount}</span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
+        <div className="space-y-1">
           <div className="flex justify-between text-sm">
-            <span>Progress</span>
-            <span>{progress.toFixed(1)}%</span>
+            <span>${formatCurrency(goal.currentAmount)}</span>
+            <span>${formatCurrency(goal.targetAmount)}</span>
           </div>
           <Progress value={progress} className="h-2" />
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>{progress.toFixed(0)}%</span>
+            <span>Target: {new Date(goal.targetDate).toLocaleDateString()}</span>
+          </div>
         </div>
 
         {!goal.isCompleted && (
