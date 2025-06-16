@@ -157,6 +157,17 @@ export const budgetsApi = {
     }
     return response.json();
   },
+  
+  deleteBudget: async (id: string) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/budgets/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to delete budget");
+    }
+    return response.json();
+  },
 };
 
 export const statsApi = {

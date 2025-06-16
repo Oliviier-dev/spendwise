@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Budget } from "./columns";
+import { formatCurrency } from "@/lib/utils";
 
 interface UpdateBudgetModalProps {
   open: boolean;
@@ -21,7 +22,7 @@ export function UpdateBudgetModal({ open, onOpenChange, budget, onSubmit }: Upda
   // Reset amount when budget changes
   useEffect(() => {
     if (budget) {
-      setAmount(budget.amount.toString());
+      setAmount(formatCurrency(budget.amount));
     }
   }, [budget]);
 

@@ -2,7 +2,9 @@
 
 import type { ColumnDef, SortingFn } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Pencil } from "lucide-react";
+import { DeleteBudgetDialog } from "./DeleteBudgetDialog";
+import { formatCurrency } from "@/lib/utils";
 
 export interface Budget {
   id: string;
@@ -13,13 +15,18 @@ export interface Budget {
   year: string;
 }
 
+interface ColumnProps {
+  onBudgetDeleted: () => void;
+  onEditClick: (budget: Budget) => void;
+}
+
 const numericSort: SortingFn<Budget> = (rowA, rowB, columnId) => {
   const a = parseFloat(rowA.getValue(columnId)) || 0;
   const b = parseFloat(rowB.getValue(columnId)) || 0;
   return a - b;
 };
 
-export const columns: ColumnDef<Budget>[] = [
+export const createColumns = ({ onBudgetDeleted, onEditClick }: ColumnProps): ColumnDef<Budget>[] => [
   {
     accessorKey: "month",
     header: ({ column }) => {
@@ -57,11 +64,7 @@ export const columns: ColumnDef<Budget>[] = [
     },
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("amount"));
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(amount);
-      return formatted;
+      return `$${formatCurrency(amount)}`;
     },
     sortingFn: numericSort,
   },
@@ -80,11 +83,7 @@ export const columns: ColumnDef<Budget>[] = [
     },
     cell: ({ row }) => {
       const spent = parseFloat(row.getValue("spent")) || 0;
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(spent);
-      return <span className="text-red-600">{formatted}</span>;
+      return <span className="text-red-600">${formatCurrency(spent)}</span>;
     },
     sortingFn: numericSort,
   },
@@ -105,12 +104,32 @@ export const columns: ColumnDef<Budget>[] = [
       const amount = parseFloat(row.getValue("amount"));
       const spent = parseFloat(row.getValue("spent")) || 0;
       const remaining = amount - spent;
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(remaining);
-      return <span className="text-green-600">{formatted}</span>;
+      return <span className="text-green-600">${formatCurrency(remaining)}</span>;
     },
     sortingFn: numericSort,
   },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      const budget = row.original;
+      
+      return (
+        <div className="flex items-center justify-end space-x-1" onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8" 
+            onClick={() => onEditClick(budget)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <DeleteBudgetDialog 
+            budget={budget} 
+            onBudgetDeleted={onBudgetDeleted}
+          />
+        </div>
+      );
+    },
+  }
 ]; 

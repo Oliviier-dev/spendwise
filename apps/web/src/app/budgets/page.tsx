@@ -18,10 +18,12 @@ export default function BudgetsPage() {
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const fetchBudgets = async () => {
       try {
+        setIsLoading(true);
         const response = await budgetsApi.getBudgets();
         setBudgets(response.data);
       } catch (error) {
@@ -33,7 +35,7 @@ export default function BudgetsPage() {
     };
 
     fetchBudgets();
-  }, []);
+  }, [refreshTrigger]);
 
   const currentMonthBudget = useMemo(() => {
     const now = new Date();
@@ -92,6 +94,10 @@ export default function BudgetsPage() {
     }
   };
 
+  const handleBudgetDeleted = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -124,6 +130,7 @@ export default function BudgetsPage() {
                 setSelectedBudget(budget);
                 setIsUpdateModalOpen(true);
               }}
+              onBudgetDeleted={handleBudgetDeleted}
             />
           </div>
         </CardContent>

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import type { Budget } from "./columns";
+import { formatCurrency } from "@/lib/utils";
 
 interface BudgetCardProps {
   budget: Budget;
@@ -34,19 +35,19 @@ export function BudgetCard({ budget, onUpdateClick }: BudgetCardProps) {
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Budget Amount</p>
             <p className="text-lg sm:text-xl font-semibold">
-              ${Number(budget.amount).toLocaleString()}
+              ${formatCurrency(budget.amount)}
             </p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Spent</p>
             <p className="text-lg sm:text-xl font-semibold text-red-600">
-              ${Number(budget.spent).toLocaleString()}
+              ${formatCurrency(budget.spent)}
             </p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Remaining</p>
             <p className="text-lg sm:text-xl font-semibold text-green-600">
-              ${Number(budget.remaining).toLocaleString()}
+              ${formatCurrency(budget.remaining)}
             </p>
           </div>
         </div>

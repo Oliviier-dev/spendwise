@@ -26,15 +26,27 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import type { Budget } from "./columns";
-import { columns } from "./columns";
+import { createColumns } from "./columns";
 
 interface BudgetTableProps {
   budgets: Budget[];
   onRowClick?: (budget: Budget) => void;
+  onBudgetDeleted: () => void;
 }
 
-export function BudgetTable({ budgets, onRowClick }: BudgetTableProps) {
+export function BudgetTable({ 
+  budgets, 
+  onRowClick, 
+  onBudgetDeleted 
+}: BudgetTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  
+  const columns = createColumns({ 
+    onBudgetDeleted, 
+    onEditClick: (budget) => {
+      onRowClick?.(budget);
+    }
+  });
 
   const table = useReactTable({
     data: budgets,
