@@ -26,7 +26,7 @@ const navigation = [
   },
   {
     name: "Budget",
-    href: "/budget",
+    href: "/budgets",
     icon: PiggyBank,
   },
   {
