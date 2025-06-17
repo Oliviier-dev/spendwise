@@ -119,29 +119,6 @@ export default function Home() {
                     <div className="h-2 bg-primary rounded-full" style={{width: '74%'}}></div>
                   </div>
                 </div>
-                <div className="pt-2">
-                  <div className="flex justify-between text-xs text-muted-foreground mb-2">
-                    <span>CATEGORY BREAKDOWN</span>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1">
-                    <div className="text-center p-1">
-                      <div className="w-full bg-blue-100 h-8 rounded flex items-center justify-center text-xs font-medium">25%</div>
-                      <div className="text-xs mt-1">Housing</div>
-                    </div>
-                    <div className="text-center p-1">
-                      <div className="w-full bg-green-100 h-8 rounded flex items-center justify-center text-xs font-medium">15%</div>
-                      <div className="text-xs mt-1">Food</div>
-                    </div>
-                    <div className="text-center p-1">
-                      <div className="w-full bg-yellow-100 h-8 rounded flex items-center justify-center text-xs font-medium">10%</div>
-                      <div className="text-xs mt-1">Transport</div>
-                    </div>
-                    <div className="text-center p-1">
-                      <div className="w-full bg-purple-100 h-8 rounded flex items-center justify-center text-xs font-medium">50%</div>
-                      <div className="text-xs mt-1">Other</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 

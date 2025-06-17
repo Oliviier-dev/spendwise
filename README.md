@@ -1,14 +1,24 @@
-# spendwise
+# SpendWise - Personal Expense Tracker
+
+SpendWise is a comprehensive financial management application that helps users take control of their personal finances through several key features:
+
+## Key Features
+
+- **Financial Insights** - Interactive charts and reports provide real-time visualization of your spending patterns and financial health
+- **Monthly Budget Management** - Set and manage monthly budgets to control spending across different categories
+- **Saving Goals** - Create and track progress towards financial goals like vacations, emergency funds, or major purchases
+- **Expense Tracking** - Easily add, edit, and delete transactions with categorization to monitor where your money goes
+
+## Overview
 
 This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines Next.js, Next, NONE, and more.
 
-## Features
+## Tech Stack
 
 - **TypeScript** - For type safety and improved developer experience
 - **Next.js** - Full-stack React framework
 - **TailwindCSS** - Utility-first CSS for rapid UI development
 - **shadcn/ui** - Reusable UI components
-- **Next.js** - Full-stack React framework
 - **Bun** - Runtime environment
 - **Drizzle** - TypeScript-first ORM
 - **PostgreSQL** - Database engine
@@ -21,6 +31,15 @@ First, install the dependencies:
 ```bash
 bun install
 ```
+
+## Environment Variables
+
+Environment variable examples can be found in:
+- `apps/server/.env.example` for the backend API
+- `apps/web/.env.example` for the frontend application
+
+Copy these to create your own `.env` files with the appropriate values.
+
 ## Database Setup
 
 This project uses PostgreSQL with Drizzle ORM.
